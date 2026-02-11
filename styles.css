@@ -30,7 +30,19 @@ body{
 /* Card removed: transparent container (image is hlavní) */
 .card{background:transparent;border-radius:0;padding:0;max-width:420px;width:100%;box-shadow:none;text-align:center}
 /* Image as the main element */
-.card img#invite, .invite-img{width:100%;height:auto;border-radius:0;display:block;background:transparent;box-shadow:none;object-fit:contain;cursor:pointer}
+#invite, .card img#invite, .invite-img{width:100%;height:auto;border-radius:0;display:block;background:transparent;box-shadow:none;object-fit:contain;cursor:pointer;transition:opacity 600ms ease, transform 600ms ease}
+
+/* Delayed image that will be inserted after a timeout */
+.delayed-insert{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.98);max-width:420px;width:90%;opacity:0;pointer-events:none;transition:opacity 600ms ease, transform 600ms ease;z-index:50}
+.delayed-insert.visible{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+/* Draggable styles for pozvanka-oslava */
+.draggable{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:420px;width:90%;cursor:grab;touch-action:none;pointer-events:auto;z-index:60;transition:box-shadow 160ms ease, transform 160ms ease}
+.draggable.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.02);box-shadow:0 24px 46px rgba(12,18,30,0.25);transition:none}
+.draggable img, .draggable svg{display:block;max-width:100%;height:auto}
+
+/* Prevent accidental selection while dragging */
+.draggable, .draggable *{user-select:none;-webkit-user-drag:none}
 #invite{width:100%;height:auto;border-radius:0;display:block}
 
 /* Click hearts (větší srdíčka na kliknutí) */

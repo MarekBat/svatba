@@ -248,6 +248,93 @@ function spawnClickHearts(x, y){
 
 // Attach to invite image (click + touch) and track clicks
 const inviteEl = document.getElementById('invite');
+
+// Instead of hiding the original invite, we insert a second (attached) image after 5 seconds.
+// This keeps the original visible immediately and only shows the added image later.
+// Insert a draggable image after delay with nice drag effects
+function insertDraggableImage(filename, idName = 'pozvanka-oslava'){
+  const card = document.querySelector('.card') || document.body;
+  if(!card) return;
+  card.style.position = card.style.position || 'relative';
+  const img = document.createElement('img');
+  img.className = 'delayed-insert draggable';
+  img.alt = 'Pozvánka oslavy';
+  img.id = idName;
+  img.src = filename;
+  img.style.pointerEvents = 'auto';
+  // initial center using percent; will convert to px on load
+  img.style.left = '50%'; img.style.top = '50%'; img.style.transform = 'translate(-50%,-50%)';
+  card.appendChild(img);
+
+  img.addEventListener('load', ()=>{
+    // ensure visible then enable dragging
+    requestAnimationFrame(()=> requestAnimationFrame(()=> img.classList.add('visible')));
+    makeDraggable(img);
+  });
+  img.addEventListener('error', ()=>{
+    img.remove();
+    console.warn('Delayed image not found:', filename);
+  });
+}
+
+function makeDraggable(el){
+  const parent = el.parentElement || document.body;
+  const parentRect = parent.getBoundingClientRect();
+  // convert centered percent position into px coordinates
+  el.style.transform = 'none';
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const startLeft = Math.max(0, Math.round((parentRect.width - w) / 2));
+  const startTop = Math.max(0, Math.round((parentRect.height - h) / 2));
+  el.style.left = startLeft + 'px';
+  el.style.top = startTop + 'px';
+  el.style.position = 'absolute';
+  el.style.willChange = 'left, top, transform';
+
+  let dragging = false;
+  let sx=0, sy=0, ox=0, oy=0;
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function onPointerDown(e){
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    dragging = true;
+    el.classList.add('dragging');
+    sx = e.clientX; sy = e.clientY;
+    ox = parseFloat(el.style.left || 0); oy = parseFloat(el.style.top || 0);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp, {once:true});
+  }
+
+  function onPointerMove(e){
+    if(!dragging) return;
+    const dx = e.clientX - sx; const dy = e.clientY - sy;
+    const nx = clamp(ox + dx, 0, parent.clientWidth - el.offsetWidth);
+    const ny = clamp(oy + dy, 0, parent.clientHeight - el.offsetHeight);
+    el.style.left = nx + 'px'; el.style.top = ny + 'px';
+    // subtle rotation based on horizontal displacement
+    const centerX = (parent.clientWidth - el.offsetWidth)/2;
+    const rot = ((nx - centerX) / parent.clientWidth) * 18; 
+    el.style.transform = `rotate(${rot}deg)`;
+  }
+
+  function onPointerUp(e){
+    dragging = false;
+    el.classList.remove('dragging');
+    // smooth settle back to no rotation
+    el.style.transform = 'rotate(0deg)';
+    document.removeEventListener('pointermove', onPointerMove);
+    try{ el.releasePointerCapture(e.pointerId); }catch(_){ }
+  }
+
+  el.addEventListener('pointerdown', onPointerDown, {passive:false});
+}
+
+// Insert the specific pozvanka after 5 seconds
+setTimeout(()=>{
+  const candidate = 'assets/pozvanka-oslava.png';
+  insertDraggableImage(candidate, 'pozvanka-oslava');
+}, 5000);
 const countNumEl = document.getElementById('click-count-number');
 let clickCount = parseInt(localStorage.getItem('inviteClickCount') || '0', 10) || 0;
 if(countNumEl) countNumEl.textContent = clickCount;
